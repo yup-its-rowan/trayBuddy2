@@ -1,5 +1,4 @@
 import MidiKey.MidiKeyboard;
-
 import javax.imageio.ImageIO;
 import javax.sound.midi.MidiDevice;
 import java.awt.*;

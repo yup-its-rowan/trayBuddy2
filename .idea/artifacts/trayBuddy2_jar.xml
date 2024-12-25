@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="trayBuddy2:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/trayBuddy2_jar</output-path>
+    <root id="archive" name="trayBuddy2.jar">
+      <element id="module-output" name="trayBuddy2" />
+      <element id="module-source" name="trayBuddy2" />
+    </root>
+  </artifact>
+</component>

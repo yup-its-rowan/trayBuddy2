@@ -1,0 +1,1 @@
+start javaw -jar trayBuddy2.jar
