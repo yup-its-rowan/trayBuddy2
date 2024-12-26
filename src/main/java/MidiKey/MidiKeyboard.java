@@ -8,10 +8,13 @@ public class MidiKeyboard {
 
     private static MidiDevice inputDevice;
     private static Sequencer mainSequencer;
+    private static RealTimeReceiver realTimeReceiver;
     private MidiKeyboard() {
+        realTimeReceiver = new RealTimeReceiver();
     }
 
     public MidiDevice.Info[] getListOfMidiDevices() {
+        close();
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
         for (MidiDevice.Info info : infos) {
             //MidiDevice device = MidiSystem.getMidiDevice(info);
@@ -41,8 +44,7 @@ public class MidiKeyboard {
         mainSequencer.open();
 
         Transmitter transmitter = inputDevice.getTransmitter();
-        Receiver receiver = new RealTimeReceiver();
-        transmitter.setReceiver(receiver);
+        transmitter.setReceiver(realTimeReceiver);
 
         return true;
     }

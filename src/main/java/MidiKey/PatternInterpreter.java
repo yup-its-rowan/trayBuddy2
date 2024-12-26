@@ -1,9 +1,5 @@
 package MidiKey;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -19,9 +15,9 @@ public class PatternInterpreter {
     }
 
 
-    private Pattern testPattern = new Pattern(new int[]{69, 71, 72}, (byte) 1);
-    private Pattern testPattern2 = new Pattern(new int[]{84, 83, 82, 81, 80}, (byte) 2);
-    private Pattern[] patterns = {testPattern, testPattern2};
+    private Pattern freddyPattern = new Pattern(new int[]{69, 71, 72}, (byte) 1);
+    private Pattern christmasPattern = new Pattern(new int[]{64, 64, 64, 64, 64, 64, 64, 67, 60, 62, 64}, (byte) 2);
+    private Pattern[] patterns = {freddyPattern, christmasPattern};
 
     private ArrayList<Node> currentNodes = new ArrayList<>();
 
@@ -39,11 +35,11 @@ public class PatternInterpreter {
                 }
             }
         }
-        for (int i = 0; i < currentNodeSize; i++) {
-            currentNodes.remove(i);
-        }
+
+        currentNodes.subList(0, currentNodeSize).clear();
+
         if (root.ruleMap.containsKey(note)) {
-            //System.out.println("Root pattern found");
+            System.out.println("Root pattern found");
             currentNodes.add(root.ruleMap.get(note));
             if (root.ruleMap.get(note).value != 0) {
                 foundPattern(root.ruleMap.get(note).value);
@@ -78,28 +74,24 @@ public class PatternInterpreter {
         System.out.println("Pattern " + value + " found");
         if (value == 1) {
             showFreddy();
+        } else if (value == 2) {
+            showChristmas();
         }
     }
 
     private void showFreddy() {
         System.out.println("HarHarhar...");
-        FreddyPopup freddyPopup = new FreddyPopup();
+        Popup freddyPopup = new Popup("/freddy.jpg", "Freddy");
         freddyPopup.showPopup();
+
+        //HolderFrame freddyFrame = new HolderFrame("/freddy.jpg", "Freddy");
+
     }
 
-    private static void copyInputStreamToFile(InputStream inputStream, File file) {
-
-        // append = false
-        try (FileOutputStream outputStream = new FileOutputStream(file, false)) {
-            int read;
-            byte[] bytes = new byte[2048];
-            while ((read = inputStream.read(bytes)) != -1) {
-                outputStream.write(bytes, 0, read);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    private void showChristmas() {
+        System.out.println("Merry Christmas!");
+        Popup christmasPopup = new Popup("/snoopyChristmas.gif", "Christmas");
+        christmasPopup.showPopup();
     }
 }
 
