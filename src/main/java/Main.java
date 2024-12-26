@@ -75,16 +75,12 @@ public class Main {
         refreshMidiInputs.addActionListener(refreshListener);
         playMidiKeyboardItem.addItemListener(e -> {
             if (playMidiKeyboardItem.getState()) {
-                try {
-                    boolean worked = MidiKeyboard.play();
-                    if (!worked) {
-                        playMidiKeyboardItem.setState(false);
-                    }
-                } catch (Exception exception) {
-                    exception.printStackTrace();
+                boolean worked = MidiKeyboardSingleton.play();
+                if (!worked) {
+                    playMidiKeyboardItem.setState(false);
                 }
             } else {
-                MidiKeyboardSingleton.close();
+                MidiKeyboardSingleton.unplay();
             }
             System.out.println("Play midi keyboard item state: " + playMidiKeyboardItem.getState());
         });
@@ -144,16 +140,19 @@ public class Main {
         for (int i = 0; i < midiInputs.size(); i++) {
             int finalI = i;
             midiInputs.get(i).addItemListener(e -> {
-                //System.out.println("Setting midi input device to " + info.getName());
-                MidiKeyboardSingleton.setMidiDevice(midiDeviceInfos[finalI]);
-                for (int j = 0; j < midiInputs.size(); j++) {
-                    if (j != finalI) {
-                        midiInputs.get(j).setState(false);
+
+                if (midiInputs.get(finalI).getState()) {
+                    MidiKeyboardSingleton.setMidiDevice(midiDeviceInfos[finalI]); //set midi device auto closes first
+                    for (int j = 0; j < midiInputs.size(); j++) {
+                        if (j != finalI) {
+                            midiInputs.get(j).setState(false);
+                        }
                     }
+                    midiInputs.get(finalI).setState(true);
+                    playMidiKeyboardItem.setState(false);
+                } else {
+                    MidiKeyboardSingleton.close();
                 }
-                midiInputs.get(finalI).setState(true);
-                MidiKeyboardSingleton.close(); //close the old one before opening the new one on play
-                playMidiKeyboardItem.setState(false);
             });
             midiInputMenu.add(midiInputs.get(i));
         }

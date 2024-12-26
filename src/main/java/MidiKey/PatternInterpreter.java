@@ -39,7 +39,7 @@ public class PatternInterpreter {
         currentNodes.subList(0, currentNodeSize).clear();
 
         if (root.ruleMap.containsKey(note)) {
-            System.out.println("Root pattern found");
+            //System.out.println("Root pattern found");
             currentNodes.add(root.ruleMap.get(note));
             if (root.ruleMap.get(note).value != 0) {
                 foundPattern(root.ruleMap.get(note).value);
@@ -71,7 +71,7 @@ public class PatternInterpreter {
     }
 
     private void foundPattern(byte value) {
-        System.out.println("Pattern " + value + " found");
+        //System.out.println("Pattern " + value + " found");
         if (value == 1) {
             showFreddy();
         } else if (value == 2) {
@@ -80,7 +80,7 @@ public class PatternInterpreter {
     }
 
     private void showFreddy() {
-        System.out.println("HarHarhar...");
+        //System.out.println("HarHarhar...");
         Popup freddyPopup = new Popup("/freddy.jpg", "Freddy");
         freddyPopup.showPopup();
 
@@ -89,7 +89,7 @@ public class PatternInterpreter {
     }
 
     private void showChristmas() {
-        System.out.println("Merry Christmas!");
+        //System.out.println("Merry Christmas!");
         Popup christmasPopup = new Popup("/snoopyChristmas.gif", "Christmas");
         christmasPopup.showPopup();
     }
