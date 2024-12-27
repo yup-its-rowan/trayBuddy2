@@ -35,12 +35,15 @@ public class PortMidiReceiver {
 
         Pointer stream = streamRef.getValue();
 
+        // Allocate buffer for one PmEvent
+        PmEvent.ByReference buffer = new PmEvent.ByReference();
+
         // Read MIDI input
-        Pointer buffer = new Pointer(0);
         while (true) {
             int readResult = pm.Pm_Read(stream, buffer, 1); // Read one event
             if (readResult > 0) {
-                System.out.println("MIDI Event Received!");
+                System.out.printf("MIDI Event Received: Message=0x%08X, Timestamp=%d%n",
+                        buffer.message, buffer.timestamp);
             } else if (readResult != PMError.pmNoError) {
                 System.err.println("Error reading MIDI input: " + PMError.getErrorMessage(readResult));
                 break;

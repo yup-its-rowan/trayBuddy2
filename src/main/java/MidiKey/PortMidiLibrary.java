@@ -3,7 +3,11 @@ package MidiKey;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
+
+import java.util.Arrays;
+import java.util.List;
 
 public interface PortMidiLibrary extends Library {
     PortMidiLibrary INSTANCE = Native.load("PortMidi", PortMidiLibrary.class);
@@ -13,7 +17,7 @@ public interface PortMidiLibrary extends Library {
     int Pm_GetDefaultInputDeviceID();
     //int Pm_OpenInput(Pointer stream, Pointer inputDevice, Pointer buffer, int bufferSize, Pointer timeProc, Pointer timeInfo);
     int Pm_OpenInput(PointerByReference stream, int inputDevice, Pointer inputBuffer, int bufferSize, Pointer timeProc, Pointer timeInfo);
-    int Pm_Read(Pointer stream, Pointer buffer, int length);
+    int Pm_Read(Pointer stream, PmEvent buffer, int length);
     int Pm_Close(Pointer stream);
 }
 
@@ -45,3 +49,4 @@ class PMError {
         }
     }
 }
+
