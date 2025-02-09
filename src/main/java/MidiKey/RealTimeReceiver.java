@@ -9,11 +9,11 @@ public class RealTimeReceiver implements Receiver {
     private boolean play = false;
     @Override
     public void send(MidiMessage message, long timeStamp) {
-        if (message instanceof ShortMessage) {
-            int command = ((ShortMessage) message).getCommand();
-            int channel = ((ShortMessage) message).getChannel();
-            int data1 = ((ShortMessage) message).getData1();
-            int data2 = ((ShortMessage) message).getData2();
+        if (message instanceof ShortMessage shortMessage) {
+            int command = shortMessage.getCommand();
+            int channel = shortMessage.getChannel();
+            int data1 = shortMessage.getData1();
+            int data2 = shortMessage.getData2();
             MIDIinterpreter(command, channel, data1, data2);
         }
     }
