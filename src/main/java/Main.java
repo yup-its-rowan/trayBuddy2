@@ -1,17 +1,17 @@
-import MidiKey.MidiKeyboard;
 import javax.imageio.ImageIO;
-import javax.sound.midi.MidiDevice;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-
-import static MidiKey.MidiKeyboard.MidiKeyboardSingleton;
+import java.nio.file.Files;
 
 public class Main {
+
+    private static long currentMIDIProcessID = -1;
 
     public static void main(String[] args) throws IOException {
         if (!SystemTray.isSupported()) {
@@ -36,12 +36,11 @@ public class Main {
         //setup for how menu should look
         Menu shortcutsMenu = new Menu("Shortcuts");
             MenuItem emailItem = new MenuItem("Email");
-            MenuItem schoolItem = new MenuItem("School");
+            //MenuItem schoolItem = new MenuItem("School");
             MenuItem tf2Item = new MenuItem("TF2");
         Menu midiMenu = new Menu("Midikey");
-            Menu midiInputMenu = new Menu("Input");
-                MenuItem refreshMidiInputs = new MenuItem("Refresh");
-            CheckboxMenuItem playMidiKeyboardItem = new CheckboxMenuItem("Play", false);
+            CheckboxMenuItem loudMidiCheckboxItem = new CheckboxMenuItem("Loud", true);
+            CheckboxMenuItem patternMidiCheckboxItem = new CheckboxMenuItem("Pattern", true);
         MenuItem piBoardItem = new MenuItem("PiBoard");
         MenuItem exitItem = new MenuItem("Exit");
 
@@ -69,20 +68,34 @@ public class Main {
         tf2Item.addActionListener(tf2Listener);
 
         //midi input devices listener and stuff
-        ActionListener refreshListener = e -> {
-            populateMidiInputMenu(midiInputMenu, refreshMidiInputs, playMidiKeyboardItem);
-        };
-        refreshMidiInputs.addActionListener(refreshListener);
-        playMidiKeyboardItem.addItemListener(e -> {
-            if (playMidiKeyboardItem.getState()) {
-                boolean worked = MidiKeyboardSingleton.play();
-                if (!worked) {
-                    playMidiKeyboardItem.setState(false);
-                }
+        ProcessBuilder midiBothExe = tempMIDIFile("/rustPiano/both.exe", "both");
+        ProcessBuilder midiLoudExe = tempMIDIFile("/rustPiano/loud.exe", "loud");
+        ProcessBuilder midiPatternExe = tempMIDIFile("/rustPiano/pattern.exe", "pattern");
+
+
+
+        loudMidiCheckboxItem.addItemListener(e -> {
+            if (loudMidiCheckboxItem.getState() && patternMidiCheckboxItem.getState()) {
+                changeMIDIProcess(midiBothExe);
+            } else if (loudMidiCheckboxItem.getState()) {
+                changeMIDIProcess(midiLoudExe);
+            } else if (patternMidiCheckboxItem.getState()) {
+                changeMIDIProcess(midiPatternExe);
             } else {
-                MidiKeyboardSingleton.unplay();
+                stopCurrentMIDIProcess();
             }
-            System.out.println("Play midi keyboard item state: " + playMidiKeyboardItem.getState());
+        });
+
+        patternMidiCheckboxItem.addItemListener(e -> {
+            if (loudMidiCheckboxItem.getState() && patternMidiCheckboxItem.getState()) {
+                changeMIDIProcess(midiBothExe);
+            } else if (loudMidiCheckboxItem.getState()) {
+                changeMIDIProcess(midiLoudExe);
+            } else if (patternMidiCheckboxItem.getState()) {
+                changeMIDIProcess(midiPatternExe);
+            } else {
+                stopCurrentMIDIProcess();
+            }
         });
 
         //pi board opener and stuff
@@ -94,7 +107,7 @@ public class Main {
         //exit listener and stuff
         ActionListener exitListener = e -> {
             PiBoard.PiBoardSingleton.exit();
-            MidiKeyboardSingleton.close();
+            stopCurrentMIDIProcess();
             tray.remove(trayIcon);
             System.exit(0);
         };
@@ -104,10 +117,8 @@ public class Main {
         //shortcutsMenu.add(schoolItem);
         shortcutsMenu.add(tf2Item);
 
-        midiInputMenu.add(refreshMidiInputs);
-
-        midiMenu.add(midiInputMenu);
-        midiMenu.add(playMidiKeyboardItem);
+        midiMenu.add(loudMidiCheckboxItem);
+        midiMenu.add(patternMidiCheckboxItem);
 
         popup.add(shortcutsMenu);
         popup.add(midiMenu);
@@ -124,39 +135,43 @@ public class Main {
         }
 
         //onStartThings
-        populateMidiInputMenu(midiInputMenu, refreshMidiInputs, playMidiKeyboardItem);
+        changeMIDIProcess(midiBothExe);
         System.out.println("Traybuddy started");
     }
 
-    public static void populateMidiInputMenu(Menu midiInputMenu, MenuItem refreshMidiInputs, CheckboxMenuItem playMidiKeyboardItem) {
-        //System.out.println("Refreshing midi input devices");
-        MidiDevice.Info[] midiDeviceInfos = MidiKeyboardSingleton.getListOfMidiDevices();
-        midiInputMenu.removeAll();
-        ArrayList<CheckboxMenuItem> midiInputs = new ArrayList<>();
-        for (MidiDevice.Info info : midiDeviceInfos) {
-            CheckboxMenuItem midiInput = new CheckboxMenuItem(info.getName());
-            midiInputs.add(midiInput);
+    private static ProcessBuilder tempMIDIFile(String path, String tempFileName) throws IOException {
+        InputStream inputStream = Main.class.getResourceAsStream(path);
+        if (inputStream == null){
+            System.out.println("inputStream is null");
+            return null;
         }
-        for (int i = 0; i < midiInputs.size(); i++) {
-            int finalI = i;
-            midiInputs.get(i).addItemListener(e -> {
+        File tempFile = File.createTempFile(tempFileName, ".exe");
+        tempFile.deleteOnExit();
 
-                if (midiInputs.get(finalI).getState()) {
-                    MidiKeyboardSingleton.setMidiDevice(midiDeviceInfos[finalI]); //set midi device auto closes first
-                    for (int j = 0; j < midiInputs.size(); j++) {
-                        if (j != finalI) {
-                            midiInputs.get(j).setState(false);
-                        }
-                    }
-                    midiInputs.get(finalI).setState(true);
-                    playMidiKeyboardItem.setState(false);
-                } else {
-                    MidiKeyboardSingleton.close();
-                }
-            });
-            midiInputMenu.add(midiInputs.get(i));
+        Files.copy(inputStream, tempFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+        return new ProcessBuilder(tempFile.getAbsolutePath());
+    }
+
+    private static void stopCurrentMIDIProcess(){
+        if (currentMIDIProcessID != -1) {
+            try {
+                Process process = new ProcessBuilder("taskkill", "/F", "/PID", String.valueOf(currentMIDIProcessID)).start();
+                process.waitFor();
+            } catch (IOException | InterruptedException ioException) {
+                ioException.printStackTrace();
+            }
+            currentMIDIProcessID = -1;
         }
-        midiInputMenu.addSeparator();
-        midiInputMenu.add(refreshMidiInputs);
+    }
+
+    private static void changeMIDIProcess(ProcessBuilder processBuilder) {
+        stopCurrentMIDIProcess();
+        try {
+            Process process = processBuilder.start();
+            currentMIDIProcessID = process.pid();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
     }
 }
